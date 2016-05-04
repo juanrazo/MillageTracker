@@ -1,0 +1,29 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="edu.utep.cs.cs4330.millagetracker.MainActivity">
+
+    <item
+        android:id="@+id/trips"
+        android:orderInCategory="100"
+        android:title="Trips"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="200"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/newtrips"
+        android:title="New Trip"
+        android:orderInCategory="300"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/reports"
+        android:title="Reports"
+        android:orderInCategory="400"
+        app:showAsAction="never"/>
+
+</menu>
