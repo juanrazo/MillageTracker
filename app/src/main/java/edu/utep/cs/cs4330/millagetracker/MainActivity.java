@@ -31,14 +31,11 @@ public class MainActivity extends DataBaseActivity {
         setSupportActionBar(toolbar);
         tripListView = (ListView) findViewById(R.id.tripListView);
         loadList();
-
-
     }
 
     @Override
     public void onResume(){
         super.onResume();
-        loadList();
     }
 
     private void loadList(){

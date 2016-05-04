@@ -23,7 +23,6 @@ public class DataBaseActivity extends AppCompatActivity {
             SQLiteDatabase mileDatabase = this.openOrCreateDatabase("Miles", MODE_PRIVATE, null);
             mileDatabase.execSQL("CREATE TABLE IF NOT EXISTS trip (id INTEGER PRIMARY KEY, date VARCHAR, origin VARCHAR, destination VARCHAR, begin INT(4), end INT(4))");
 
-
         }
         catch (Exception e){
             e.printStackTrace();
@@ -47,18 +46,21 @@ public class DataBaseActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.trips) {
+            mileDatabase.close();
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
             Log.i("Menu", " Trips");
             return true;
         }
 
-        if (id == R.id.action_settings) {
-            Log.i("Menu", " Settings");
-            return true;
-        }
+//        if (id == R.id.action_settings) {
+//            mileDatabase.close();
+//            Log.i("Menu", " Settings");
+//            return true;
+//        }
 
         if (id == R.id.newtrips){
+            mileDatabase.close();
             Intent intent = new Intent(getApplicationContext(), NewTrip.class);
             startActivity(intent);
             Log.i("Menu", "New Trip");
@@ -66,6 +68,7 @@ public class DataBaseActivity extends AppCompatActivity {
         }
 
         if (id == R.id.reports){
+            mileDatabase.close();
             Intent intent = new Intent(getApplicationContext(), ExportReport.class);
             startActivity(intent);
             Log.i("Menu", "Reports");

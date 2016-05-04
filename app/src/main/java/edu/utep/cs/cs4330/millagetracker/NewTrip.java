@@ -4,8 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -24,6 +22,8 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import java.lang.Math;
+
 public class NewTrip extends DataBaseActivity implements LocationListener {
 
     LocationManager locationManager;
@@ -32,7 +32,7 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
     private RadioButton gpsOn;
     private RadioButton gpsOff;
     private EditText date;
-    private EditText  origin;
+    private EditText origin;
     private EditText destination;
     private EditText begin;
     private EditText ending;
@@ -44,8 +44,10 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
     private int iBegin;
     private int iEnd;
     private int iTotal;
-
-
+    private Double lon1 = 0.0;
+    private Double lat1 = 0.0;
+    private Double lon2 = 0.0;
+    private Double lat2 = 0.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,7 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
         setContentView(R.layout.activity_new_trip);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         save = (Button) findViewById(R.id.save);
         save.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,19 +79,17 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
             }
         });
         date = (EditText) findViewById(R.id.date);
-        origin =  (EditText) findViewById(R.id.editOrigin);
+        origin = (EditText) findViewById(R.id.editOrigin);
         destination = (EditText) findViewById(R.id.editDestination);
         begin = (EditText) findViewById(R.id.editBegining);
         ending = (EditText) findViewById(R.id.editEnding);
         total = (TextView) findViewById(R.id.total);
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        provider = locationManager.getBestProvider(new Criteria(), false);
 
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(verifyFields()){
+                if (verifyFields()) {
                     saveToDB();
                     int end = Integer.parseInt(ending.getText().toString());
                     int beg = Integer.parseInt(begin.getText().toString());
@@ -101,65 +102,73 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
 
     }
 
-    public void onRadioButtonClicked(View view){
+    public void onRadioButtonClicked(View view) {
         boolean checked = ((RadioButton) view).isChecked();
         switch (view.getId()) {
             case R.id.radioOn:
                 if (checked) {
-                    isGPS=true;
-                    getLocation();
+                    isGPS = true;
+                    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    provider = locationManager.getBestProvider(new Criteria(), false);
+                    if (begin.getText().toString().trim().length() > 0) {
+
+                        iBegin = Integer.parseInt(begin.getText().toString());
+                        isGPS = true;
+                        getLocation();
+                    }
                 }
                 break;
             case R.id.radioOff:
                 if (checked) {
-                    isGPS=false;
+                    isGPS = false;
                 }
                 break;
         }
         getLocation();
     }
 
-    public void saveToDB(){
-        try{
+    public void saveToDB() {
+        try {
             mileDatabase = this.openOrCreateDatabase("Miles", MODE_PRIVATE, null);
-            mileDatabase.execSQL("INSERT INTO trip (date, origin, destination, begin, end) VALUES ( '" + sDate + "', '"+ sOrigin + "', '"+ sDestination + "', " + iBegin + ", " + iEnd + ")");
-            Log.i("Query", "INSERT INTO trip (date, origin, destination, begin, end) VALUES ( '" + sDate + "', '"+ sOrigin + "', '"+ sDestination + "', " + iBegin + ", " + iEnd + ")");
+            mileDatabase.execSQL("INSERT INTO trip (date, origin, destination, begin, end) " +
+                    "VALUES ( '" + sDate + "', '" + sOrigin + "', '" + sDestination + "', " + iBegin + ", " + iEnd + ")");
+
             mileDatabase.close();
-        }
-        catch (Exception e){
+        } catch (Exception e) {
 
         }
 
     }
-    public boolean verifyFields(){
-        int fields=0;
-        if(date.getText().toString().length()>0){
+
+    public boolean verifyFields() {
+        int fields = 0;
+        if (date.getText().toString().length() > 0) {
             Log.i("NewTrip", date.getText().toString());
             sDate = date.getText().toString();
             fields++;
         }
-        if(origin.getText().toString().length()>0){
+        if (origin.getText().toString().length() > 0) {
             Log.i("NewTrip", origin.getText().toString());
             sOrigin = origin.getText().toString();
             fields++;
         }
-        if(destination.getText().toString().length()>0){
+        if (destination.getText().toString().length() > 0) {
             Log.i("NewTrip", destination.getText().toString());
             sDestination = destination.getText().toString();
             fields++;
         }
-        if(begin.getText().toString().length()>0){
+        if (begin.getText().toString().length() > 0) {
             Log.i("NewTrip", begin.getText().toString());
             iBegin = Integer.parseInt(begin.getText().toString());
             fields++;
         }
-        if(ending.getText().toString().length()>0){
+        if (ending.getText().toString().length() > 0) {
             Log.i("NewTrip", ending.getText().toString());
             iEnd = Integer.parseInt(ending.getText().toString());
             fields++;
         }
         Log.i("Fields", "" + fields);
-        return (fields==5) ? true : false;
+        return (fields == 5) ? true : false;
     }
 
     @Override
@@ -171,7 +180,7 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
 
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         try {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -183,14 +192,13 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
 
-                if(ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION) && ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_COARSE_LOCATION)){
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) && ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
                     //provider = locationManager.NETWORK_PROVIDER;
                     //location = locationManager.getLastKnownLocation(provider);
-                    Log.i("info","need to ask permission since it is note accepted in the first time");
+                    Log.i("info", "need to ask permission since it is note accepted in the first time");
                     // need to ask permission since it is note accepted in the first time
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
-                }
-                else{
+                } else {
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
                     // after first installation this triggers so location should be called from onRequestPermissionsResult method
                     Log.i("info", "if statement working, permission yet not granted");
@@ -198,7 +206,7 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
 
                 return;
             } else {
-                if(isGPS)
+                if (isGPS)
                     locationManager.requestLocationUpdates(provider, 400, 1, this);
 
             }
@@ -209,13 +217,28 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        Double lat = location.getLatitude();
-        Double lng = location.getLongitude();
+        lat2 = location.getLatitude();
+        lon2 = location.getLongitude();
 
-        //Calculate new mile
-        Log.i("Loc: Latitude", lat.toString() + ", " + lng.toString());
-        Log.i("Loc: Longitude", lng.toString());
+        Log.i("Loc: Latitude", lat2.toString() + ", Longitude: " + lon2.toString());
+        calculateGPS();
 
+    }
+
+    private void calculateGPS(){
+
+        double dlon = lon2 - lon1;
+        double dlat = lat2 - lat1;
+        double x = Math.pow(Math.sin(dlat/2),2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dlon/2),2);
+        double y = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+        double distance = 3959 * y;
+        lon1 = lon2;
+        lat1 = lat2;
+        iEnd = iBegin + (int) distance;
+        iTotal = iEnd - iBegin;
+        int temp = iTotal + iBegin;
+        ending.setText(Integer.toString(temp));
+        total.setText(Integer.toString(iTotal));
 
     }
 
@@ -263,16 +286,14 @@ public class NewTrip extends DataBaseActivity implements LocationListener {
             Location nlocation = locationManager.getLastKnownLocation(provider);
 
             if (nlocation != null) {
-
+                lat1 = nlocation.getLatitude();
+                lon1 = nlocation.getLongitude();
+                locationManager.requestLocationUpdates(provider, 400, 1, this);
                 Log.i("Location info", "Location achieved!");
                 onLocationChanged(nlocation);
-
             } else {
-
-                Log.i("Location info", "No location :(");
-
+                Log.i("Location info", "No location");
             }
-
         }
     }
 
